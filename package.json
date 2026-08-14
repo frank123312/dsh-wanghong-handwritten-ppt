@@ -1,0 +1,43 @@
+{
+  "name": "dsh-wanghong-handwritten-ppt",
+  "version": "0.1.0",
+  "description": "Wang Hong-inspired Notability academic handwritten PPT skill for DeepSeek Harness",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "skills",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.js && python3 -m unittest discover -s skills/wanghong-handwritten-ppt/tests -p 'test_*.py' && python3 skills/wanghong-handwritten-ppt/scripts/check_deck.py skills/wanghong-handwritten-ppt/examples/deepseek-v4-flash/index.html",
+    "pack:check": "npm pack --dry-run"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "agent-skill",
+    "ppt",
+    "handwritten"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tjxj/dsh-wanghong-handwritten-ppt.git"
+  },
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
