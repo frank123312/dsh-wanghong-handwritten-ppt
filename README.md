@@ -31,6 +31,14 @@ npm test
 npm run pack:check
 ```
 
+`render.sh` isolates each slide with `?preview=N`, disables animation and transitions, and runs the DOM collision audit before taking screenshots. Significant overlaps or slide-boundary overflow in body text, formulas, annotations, result boxes, tables, or SVGs stop the export.
+
+Run the audit directly when you only need diagnostics:
+
+```sh
+node skills/wanghong-handwritten-ppt/scripts/check_layout.js /absolute/path/to/index.html all
+```
+
 ## Discovery
 
 This public repository carries the `dsh-plugin` GitHub topic and declares an installable `dsh.bundle` in `package.json`

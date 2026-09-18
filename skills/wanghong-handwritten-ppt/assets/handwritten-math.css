@@ -1,0 +1,226 @@
+/*
+ * WangHong Handwritten Math Typography
+ *
+ * 普通数学字母/数字/文字尽量手写化；
+ * 分数、矩阵、大括号、大型运算符继续交给数学排版引擎。
+ */
+
+:root {
+  --wanghong-hand-font: "HanziPen SC";
+  --wanghong-math-ink: #183b56;
+}
+
+/* =========================
+   整体数学墨水颜色
+   ========================= */
+
+.katex,
+.katex-display,
+mjx-container {
+  color: var(--wanghong-math-ink) !important;
+}
+
+/* =========================
+   KaTeX：普通字母 / Greek / text
+   ========================= */
+
+.katex .mathnormal {
+  font-family:
+    var(--wanghong-hand-font),
+    KaTeX_Math,
+    KaTeX_Main,
+    serif !important;
+}
+
+/* ker / rank / dim / text{} 等 */
+.katex .mathrm,
+.katex .text,
+.katex .textord,
+.katex .operatorname {
+  font-family:
+    var(--wanghong-hand-font),
+    KaTeX_Main,
+    serif !important;
+}
+
+/*
+ * 普通 mord 尽量手写。
+ * 特殊数学字母另行保留。
+ */
+.katex .mord:not(.mathbb):not(.mathcal):not(.mathfrak):not(.mathtt):not(.mathbf):not(.boldsymbol) {
+  font-family:
+    var(--wanghong-hand-font),
+    KaTeX_Main,
+    KaTeX_Math,
+    serif;
+}
+
+/* ℂ ℝ 等保持正规 blackboard bold */
+.katex .mathbb {
+  font-family:
+    KaTeX_AMS,
+    KaTeX_Main,
+    serif !important;
+}
+
+/* \mathcal */
+.katex .mathcal {
+  font-family:
+    KaTeX_Caligraphic,
+    KaTeX_Main,
+    serif !important;
+}
+
+/* \mathfrak */
+.katex .mathfrak {
+  font-family:
+    KaTeX_Fraktur,
+    KaTeX_Main,
+    serif !important;
+}
+
+/* monospace */
+.katex .mathtt {
+  font-family:
+    KaTeX_Typewriter,
+    monospace !important;
+}
+
+/* =========================
+   结构性数学符号保持 KaTeX
+   ========================= */
+
+/*
+ * 不强制这些结构使用 HanziPen：
+ * 分数、大括号、sqrt、relation、大型 operator 等。
+ */
+
+.katex .frac-line,
+.katex .sqrt-sign,
+.katex .delimsizing,
+.katex .delimsizinginner,
+.katex .op-symbol,
+.katex .accent-body,
+.katex .mopen,
+.katex .mclose,
+.katex .mbin,
+.katex .mrel,
+.katex .mpunct {
+  font-family:
+    KaTeX_Main,
+    KaTeX_Size1,
+    KaTeX_Size2,
+    KaTeX_Size3,
+    KaTeX_Size4,
+    serif;
+}
+
+/* =========================
+   行距 / 间距
+   ========================= */
+
+.katex {
+  line-height: 1.22;
+}
+
+.katex-display {
+  margin-top: 0.42em !important;
+  margin-bottom: 0.48em !important;
+}
+
+.katex .text,
+.katex .operatorname,
+.katex .mathrm {
+  letter-spacing: 0.005em;
+}
+
+/* =========================
+   MathJax v3
+   ========================= */
+
+mjx-container[jax="CHTML"] {
+  color: var(--wanghong-math-ink) !important;
+}
+
+/* variables */
+mjx-container[jax="CHTML"] mjx-mi {
+  font-family:
+    var(--wanghong-hand-font),
+    serif !important;
+}
+
+/* numbers */
+mjx-container[jax="CHTML"] mjx-mn {
+  font-family:
+    var(--wanghong-hand-font),
+    serif !important;
+}
+
+/* text */
+mjx-container[jax="CHTML"] mjx-mtext {
+  font-family:
+    var(--wanghong-hand-font),
+    serif !important;
+}
+
+/*
+ * 故意不覆盖 mjx-mo。
+ * ∑ ∫ 括号 relation 等继续由 MathJax 负责。
+ */
+
+/* =========================
+   Inline math
+   ========================= */
+
+p .katex,
+li .katex,
+td .katex,
+th .katex {
+  vertical-align: baseline;
+}
+
+/* =========================
+   防止偷偷裁切公式
+   ========================= */
+
+.katex-display,
+mjx-container[display="true"] {
+  max-width: 100%;
+}
+
+.katex-display > .katex,
+mjx-container[display="true"] {
+  overflow: visible;
+}
+
+/* =========================
+   Slide 内统一颜色
+   ========================= */
+
+.slide .katex,
+.slide mjx-container {
+  color: var(--wanghong-math-ink) !important;
+}
+
+/* 可手工给普通公式文字套这个类 */
+.handwritten-math {
+  color: var(--wanghong-math-ink);
+  font-family: var(--wanghong-hand-font);
+}
+
+/* =========================
+   手写 annotation 的轻微不规则
+   不要对公式本身随机旋转
+   ========================= */
+
+.handwritten-note:nth-of-type(3n + 1) {
+  transform: rotate(-0.35deg);
+}
+
+.handwritten-note:nth-of-type(3n + 2) {
+  transform: rotate(0.28deg);
+}
+
+.handwritten-note:nth-of-type(3n) {
+  transform: rotate(-0.15deg);
+}

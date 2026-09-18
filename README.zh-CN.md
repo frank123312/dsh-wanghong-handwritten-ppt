@@ -48,6 +48,14 @@ npm test
 npm run pack:check
 ```
 
+导出时 `render.sh` 会先用 `?preview=N` 隔离当前页、关闭动画和过渡，再自动运行逐页 DOM 碰撞检查。正文、公式、annotation、result box、表格或 SVG 出现明显重叠/越界时，脚本会在截图前失败退出。
+
+也可以单独审计某套 HTML：
+
+```sh
+node skills/wanghong-handwritten-ppt/scripts/check_layout.js /absolute/path/to/index.html all
+```
+
 ## 如何进入 dsh-plugin 目录
 
 GitHub 的 `dsh-plugin` 页面由 Topic 自动聚合。仓库公开后，在仓库 Topics 中加入 `dsh-plugin` 即可被发现
