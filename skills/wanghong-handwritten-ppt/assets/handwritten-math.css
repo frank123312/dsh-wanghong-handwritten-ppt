@@ -433,3 +433,221 @@ mjx-container[display="true"] {
   rotate: none;
 }
 
+
+
+/* ===== HANDWRITTEN MATH V3 EXACT SYMBOL PASS ===== */
+
+/*
+ * Precision pass:
+ * - handwritten Latin / digits / operator names
+ * - handwritten common relation/binary symbols when HanziPen contains them
+ * - Greek stays in KaTeX_Math so phi/mu/nu do not become malformed
+ * - lower bars/accents closer to the base glyph
+ */
+
+/* Only expose selected codepoints from HanziPen to math.
+   Greek U+03xx is intentionally excluded. */
+@font-face {
+  font-family: "HanziPenMathExact";
+  src: local("HanziPen SC"),
+       local("翩翩体-简"),
+       local("HanziPenSC-W3");
+
+  unicode-range:
+    U+002B,          /* + */
+    U+002D,          /* - */
+    U+0030-0039,     /* digits */
+    U+003C-003E,     /* < = > */
+    U+0041-005A,     /* A-Z */
+    U+0061-007A,     /* a-z */
+
+    U+2190-2199,     /* arrows */
+    U+21D0-21D4,     /* double arrows */
+
+    U+2208,          /* in */
+    U+2227,          /* wedge */
+    U+2228,          /* vee */
+
+    U+223C,          /* sim */
+    U+2248,          /* approx */
+    U+2260,          /* neq */
+    U+2261,          /* equiv */
+    U+2264-2265,     /* le ge */
+    U+226A-226B,     /* ll gg */
+
+    U+2295,          /* oplus */
+    U+2297;          /* otimes */
+}
+
+
+/* ----------------------------------------------------------
+   Latin variables and digits = handwritten
+   Greek falls through to KaTeX_Math automatically
+   ---------------------------------------------------------- */
+
+.katex .mathnormal,
+.katex .mord.mathnormal {
+  font-family:
+    "HanziPenMathExact",
+    KaTeX_Math,
+    KaTeX_Main,
+    serif !important;
+
+  font-weight: 400 !important;
+}
+
+
+/* ----------------------------------------------------------
+   ker / coker / rank / dim / im / span / Sym / det / tr ...
+   ---------------------------------------------------------- */
+
+.katex .mop,
+.katex .mop .mord,
+.katex .operatorname,
+.katex .mathrm {
+  font-family:
+    "HanziPenMathExact",
+    KaTeX_Main,
+    serif !important;
+
+  font-weight: 400 !important;
+  font-style: normal !important;
+}
+
+
+/* ----------------------------------------------------------
+   = + - ∈ ≡ ≠ ≤ ≥ ≪ ≫
+   → ← ↦ ⇒ ⇔
+   ⊗ ⊕ ∧ ∨
+   ---------------------------------------------------------- */
+
+.katex .mrel,
+.katex .mbin {
+  font-family:
+    "HanziPenMathExact",
+    KaTeX_Main,
+    serif !important;
+
+  font-weight: 400 !important;
+}
+
+
+/* Make non-stretchy handwritten relation glyphs feel less typeset.
+   Keep transform extremely small so mathematical alignment survives. */
+.katex .mrel:not(:has(svg)),
+.katex .mbin:not(:has(svg)) {
+  display: inline-block;
+  transform: translateY(0.008em) rotate(-0.35deg);
+  transform-origin: center center;
+}
+
+
+/* ----------------------------------------------------------
+   Tensor/direct-sum/wedge/ll symbols:
+   give handwritten glyphs slightly more visual presence
+   ---------------------------------------------------------- */
+
+.katex .mbin {
+  font-size: 1.025em;
+}
+
+.katex .mrel {
+  font-size: 1.015em;
+}
+
+
+/* ----------------------------------------------------------
+   LONG arrows:
+   \longrightarrow / \Longrightarrow / \Longleftrightarrow
+   are often SVG/stretchy in KaTeX, so a font cannot replace them.
+   Give their actual geometry a restrained hand-drawn treatment.
+   ---------------------------------------------------------- */
+
+.katex .stretchy,
+.katex .mrel svg {
+  transform: translateY(0.01em) rotate(-0.30deg) scaleY(0.94);
+  transform-origin: center center;
+}
+
+.katex .mrel svg path,
+.katex .stretchy svg path {
+  stroke: currentColor;
+  stroke-width: 0.22px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* ----------------------------------------------------------
+   GREEK FIX
+   phi / varphi / mu / nu / lambda / eta / omega etc.
+   Do NOT force HanziPen here.
+   ---------------------------------------------------------- */
+
+.katex .mathnormal {
+  font-style: italic;
+}
+
+/*
+ * Because HanziPenMathExact has NO Greek unicode range,
+ * φ ϕ μ ν λ η ω etc automatically fall through to KaTeX_Math.
+ *
+ * This prevents the malformed phi seen in the previous pass.
+ */
+
+
+/* ----------------------------------------------------------
+   BAR / ACCENT FIX V3
+   Bring \bar g and \bar U visibly closer to the glyph.
+   ---------------------------------------------------------- */
+
+.katex .accent .accent-body {
+  transform: translateY(0.115em) !important;
+  transform-origin: center bottom !important;
+}
+
+
+/* Avoid moving the underlying g/U itself. */
+.katex .accent .mord,
+.katex .accent .mathnormal {
+  transform: none !important;
+}
+
+
+/* Slight horizontal tightening makes a handwritten bar
+   look attached rather than floating. */
+.katex .accent .accent-body > span {
+  transform: scaleX(0.97);
+  transform-origin: center;
+}
+
+
+/* ----------------------------------------------------------
+   Superscript/subscript Latin stays handwritten.
+   Greek still falls through to KaTeX.
+   ---------------------------------------------------------- */
+
+.katex .msupsub .mathnormal,
+.katex .msupsub .mord {
+  font-family:
+    "HanziPenMathExact",
+    KaTeX_Math,
+    KaTeX_Main,
+    serif !important;
+}
+
+
+/* Structural math stays KaTeX:
+   fraction rules, roots, matrices, big delimiters, big operators.
+ */
+.katex .frac-line,
+.katex .sqrt-line,
+.katex .delimsizing,
+.katex .delim-size1,
+.katex .delim-size2,
+.katex .delim-size3,
+.katex .delim-size4,
+.katex .op-symbol.large-op {
+  font-family: inherit !important;
+}
+
