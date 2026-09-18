@@ -224,3 +224,212 @@ mjx-container[display="true"] {
 .handwritten-note:nth-of-type(3n) {
   transform: rotate(-0.15deg);
 }
+
+/* ===== FULL HANDWRITTEN MATH PASS V2 ===== */
+
+/*
+ * Goal:
+ * 1. Plain Latin / Greek / digits / operator names look handwritten.
+ * 2. Preserve mathematical structure: fractions, roots, stretchy delimiters,
+ *    matrices, blackboard bold, calligraphic letters, large operators.
+ * 3. Lower KaTeX accents slightly so \bar g sits closer to g.
+ */
+
+:root {
+  --hw-math-font:
+    "HanziPen SC",
+    "翩翩体-简",
+    "HanziPenSC-W3",
+    cursive;
+
+  --hw-math-ink: #17395c;
+}
+
+
+/* ----------------------------------------------------------
+   General math ink
+   ---------------------------------------------------------- */
+
+.katex,
+.katex-display {
+  color: var(--hw-math-ink);
+}
+
+
+/* ----------------------------------------------------------
+   Handwritten Latin / Greek
+   ---------------------------------------------------------- */
+
+.katex .mathnormal,
+.katex .mathrm,
+.katex .text,
+.katex .textrm,
+.katex .textit,
+.katex .operatorname,
+.katex .mord.mathnormal,
+.katex .mord.text {
+  font-family: var(--hw-math-font) !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+}
+
+
+/*
+ * KaTeX often emits ordinary digits and simple letters as .mord.
+ *
+ * We make ordinary atoms handwritten, then explicitly restore
+ * special mathematical alphabets below.
+ */
+.katex .mord {
+  font-family: var(--hw-math-font);
+}
+
+
+/* ----------------------------------------------------------
+   Preserve semantic mathematical alphabets
+   ---------------------------------------------------------- */
+
+.katex .mathbb,
+.katex .mathcal,
+.katex .mathfrak,
+.katex .mathscr,
+.katex .mathbf,
+.katex .boldsymbol {
+  font-family: inherit !important;
+}
+
+
+/* ----------------------------------------------------------
+   Operator names:
+   ker, coker, im, rank, dim, span, Sym, etc.
+   ---------------------------------------------------------- */
+
+.katex .mop .mord,
+.katex .operatorname,
+.katex .mathrm {
+  font-family: var(--hw-math-font) !important;
+  font-weight: 400 !important;
+}
+
+
+/* ----------------------------------------------------------
+   Plain numbers
+   ---------------------------------------------------------- */
+
+.katex .mord:not(.mathbb):not(.mathcal):not(.mathfrak):not(.mathscr) {
+  letter-spacing: 0.005em;
+}
+
+
+/* ----------------------------------------------------------
+   Preserve mathematical structure
+   ---------------------------------------------------------- */
+
+.katex .frac-line,
+.katex .sqrt-line,
+.katex .sqrt,
+.katex .delimsizing,
+.katex .delim-size1,
+.katex .delim-size2,
+.katex .delim-size3,
+.katex .delim-size4,
+.katex .op-symbol,
+.katex .large-op,
+.katex .stretchy,
+.katex .arraycolsep,
+.katex .vlist,
+.katex .vlist-r,
+.katex .vlist-t {
+  font-family: inherit;
+}
+
+
+/*
+ * Relations and binary operators remain mathematically clean.
+ * Their color still follows the handwritten blue-black ink.
+ */
+.katex .mrel,
+.katex .mbin,
+.katex .mopen,
+.katex .mclose,
+.katex .mpunct {
+  color: var(--hw-math-ink);
+}
+
+
+/* ----------------------------------------------------------
+   BAR / ACCENT POSITION FIX
+   ---------------------------------------------------------- */
+
+/*
+ * HanziPen glyph metrics make KaTeX's default accent position look too high.
+ * Lower the accent slightly.
+ *
+ * Positive translateY = visually lower on screen.
+ */
+.katex .accent .accent-body {
+  transform: translateY(0.075em);
+  transform-origin: center bottom;
+}
+
+
+/*
+ * Keep the actual letter stable.
+ * Only move the accent, never the base glyph.
+ */
+.katex .accent .mathnormal,
+.katex .accent .mord {
+  transform: none;
+}
+
+
+/* slightly tighter vertical construction for accented variables */
+.katex .accent {
+  line-height: 1;
+}
+
+
+/* ----------------------------------------------------------
+   Superscripts / subscripts
+   ---------------------------------------------------------- */
+
+.katex .msupsub .mord,
+.katex .msupsub .mathnormal,
+.katex .msupsub .mathrm {
+  font-family: var(--hw-math-font) !important;
+}
+
+
+/* ----------------------------------------------------------
+   Display formula spacing
+   ---------------------------------------------------------- */
+
+.katex-display {
+  margin-top: 0.16em;
+  margin-bottom: 0.24em;
+}
+
+
+/* ----------------------------------------------------------
+   Avoid synthetic heavy bold inside handwritten math
+   ---------------------------------------------------------- */
+
+.katex .mathnormal,
+.katex .mathrm,
+.katex .operatorname,
+.katex .text {
+  text-shadow: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+
+/* ----------------------------------------------------------
+   Important:
+   Do not randomly rotate formula glyphs.
+   Handwritten feel comes from font shape, not damaged baselines.
+   ---------------------------------------------------------- */
+
+.katex span {
+  rotate: none;
+}
+
