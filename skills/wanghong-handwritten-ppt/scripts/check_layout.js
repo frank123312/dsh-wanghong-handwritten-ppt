@@ -280,6 +280,30 @@ const auditScript = String.raw`
     };
   }
 
+  function waitForAnimationFrames(count, timeoutMs) {
+    const frames = new Promise(resolve => {
+      function next(remaining) {
+        if (remaining <= 0) {
+          resolve();
+          return;
+        }
+
+        requestAnimationFrame(() =>
+          next(remaining - 1)
+        );
+      }
+
+      next(count);
+    });
+
+    return Promise.race([
+      frames,
+      new Promise(resolve =>
+        setTimeout(resolve, timeoutMs)
+      )
+    ]);
+  }
+
   function addResultNode(report) {
 
     const old = document.getElementById(
@@ -312,17 +336,23 @@ const auditScript = String.raw`
        * therefore never audit before fonts finish loading.
        */
       if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
+        await Promise.race([
+          document.fonts.ready,
+          new Promise(resolve =>
+            setTimeout(resolve, 3000)
+          )
+        ]);
       }
 
       /*
-       * Allow runtime.js and math renderer to settle.
+       * Allow KaTeX auto-render and other async layout work to settle
+       * before waiting for two final animation frames.
        */
       await new Promise(resolve =>
-        requestAnimationFrame(() =>
-          requestAnimationFrame(resolve)
-        )
+        setTimeout(resolve, 250)
       );
+
+      await waitForAnimationFrames(2, 1000);
 
       const slides = [
         ...document.querySelectorAll(".slide")
@@ -376,9 +406,7 @@ const auditScript = String.raw`
 
       document.head.appendChild(staticStyle);
 
-      await new Promise(resolve =>
-        requestAnimationFrame(resolve)
-      );
+      await waitForAnimationFrames(1, 1000);
 
       const slideRect =
         slide.getBoundingClientRect();
@@ -749,7 +777,9 @@ fs.writeFileSync(
   "utf8"
 );
 
-const failures = [];
+const realLayoutFailures = [];
+const infrastructureFailures = [];
+const AUDIT_BUDGETS = [5000, 12000, 20000];
 
 function extractJSON(dom) {
 
@@ -758,12 +788,38 @@ function extractJSON(dom) {
   );
 
   if (!match) {
-    throw new Error(
-      "layout audit result not found in Chrome DOM"
-    );
+    return {
+      ok: false,
+      kind: "not-ready",
+      message: "audit result not ready"
+    };
   }
 
-  return JSON.parse(match[1]);
+  try {
+    return {
+      ok: true,
+      report: JSON.parse(match[1])
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      kind: "json-extraction",
+      message:
+        "audit JSON extraction failure: " +
+        error.message
+    };
+  }
+}
+
+function logRetry(page, reason, nextAttemptIndex) {
+  const nextBudget =
+    AUDIT_BUDGETS[nextAttemptIndex];
+
+  console.error(
+    `slide ${page}: ${reason.message}; ` +
+    `retry ${nextAttemptIndex + 1}/${AUDIT_BUDGETS.length} ` +
+    `with ${nextBudget}ms`
+  );
 }
 
 try {
@@ -780,65 +836,115 @@ try {
       pathToFileURL(auditFile).href +
       `?preview=${page}&layoutAudit=1`;
 
-    let dom;
+    let report;
+    let lastInfrastructureReason;
 
-    try {
+    for (
+      let attemptIndex = 0;
+      attemptIndex < AUDIT_BUDGETS.length;
+      attemptIndex++
+    ) {
+      const budget = AUDIT_BUDGETS[attemptIndex];
+      let dom;
 
-      dom = execFileSync(
-        CHROME,
-        [
-          "--headless=new",
-          "--allow-file-access-from-files",
-          "--disable-gpu",
-          "--hide-scrollbars",
-          "--no-sandbox",
-          "--force-device-scale-factor=1",
-          "--run-all-compositor-stages-before-draw",
-          "--disable-background-timer-throttling",
-          "--disable-renderer-backgrounding",
-          "--window-size=1920,1080",
-          "--virtual-time-budget=5000",
-          "--dump-dom",
-          url
-        ],
-        {
-          encoding: "utf8",
-          maxBuffer: 64 * 1024 * 1024,
-          stdio: [
-            "ignore",
-            "pipe",
-            "ignore"
-          ]
+      try {
+        dom = execFileSync(
+          CHROME,
+          [
+            "--headless=new",
+            "--allow-file-access-from-files",
+            "--disable-gpu",
+            "--hide-scrollbars",
+            "--no-sandbox",
+            "--force-device-scale-factor=1",
+            "--run-all-compositor-stages-before-draw",
+            "--disable-background-timer-throttling",
+            "--disable-renderer-backgrounding",
+            "--window-size=1920,1080",
+            `--virtual-time-budget=${budget}`,
+            "--dump-dom",
+            url
+          ],
+          {
+            encoding: "utf8",
+            maxBuffer: 64 * 1024 * 1024,
+            stdio: [
+              "ignore",
+              "pipe",
+              "ignore"
+            ]
+          }
+        );
+      } catch (error) {
+        lastInfrastructureReason = {
+          kind: "chrome-dump-dom",
+          message: "Chrome dump-dom failure"
+        };
+
+        if (attemptIndex + 1 < AUDIT_BUDGETS.length) {
+          logRetry(
+            page,
+            lastInfrastructureReason,
+            attemptIndex + 1
+          );
         }
-      );
 
-    } catch (error) {
+        continue;
+      }
 
-      console.error(
-        `❌ slide ${page}: Chrome audit failed`
-      );
+      const extracted = extractJSON(dom);
 
-      failures.push({
-        page,
-        fatal: true
-      });
+      if (!extracted.ok) {
+        lastInfrastructureReason = extracted;
 
-      continue;
+        if (attemptIndex + 1 < AUDIT_BUDGETS.length) {
+          logRetry(
+            page,
+            lastInfrastructureReason,
+            attemptIndex + 1
+          );
+        }
+
+        continue;
+      }
+
+      if (extracted.report.fatal) {
+        lastInfrastructureReason = {
+          kind: "browser-audit-fatal",
+          message:
+            "browser audit fatal error: " +
+            (extracted.report.error || "unknown error")
+        };
+
+        if (attemptIndex + 1 < AUDIT_BUDGETS.length) {
+          logRetry(
+            page,
+            lastInfrastructureReason,
+            attemptIndex + 1
+          );
+        }
+
+        continue;
+      }
+
+      report = extracted.report;
+      break;
     }
 
-    let report;
-
-    try {
-      report = extractJSON(dom);
-    } catch (error) {
-
+    if (!report) {
       console.error(
-        `❌ slide ${page}: ${error.message}`
+        `❌ slide ${page}: AUDIT INFRASTRUCTURE FAILURE`
+      );
+      console.error(
+        `   ${
+          lastInfrastructureReason?.message ||
+          "audit result unavailable"
+        }`
       );
 
-      failures.push({
+      infrastructureFailures.push({
         page,
-        fatal: true
+        reason: lastInfrastructureReason
       });
 
       continue;
@@ -848,18 +954,6 @@ try {
       (report.collisions || []).length +
       (report.overflows || []).length +
       (report.internalOverflows || []).length;
-
-    if (report.fatal) {
-
-      console.error(
-        `❌ slide ${page}: fatal audit error`
-      );
-
-      console.error(report.error || "");
-
-      failures.push(report);
-      continue;
-    }
 
     if (issueCount === 0) {
 
@@ -883,6 +977,10 @@ try {
           ? ` — ${report.title}`
           : ""
       )
+    );
+
+    console.error(
+      "   REAL LAYOUT FAILURE"
     );
 
     for (
@@ -944,7 +1042,7 @@ try {
       );
     }
 
-    failures.push(report);
+    realLayoutFailures.push(report);
   }
 
 } finally {
@@ -962,23 +1060,36 @@ try {
 
 console.log("");
 
-if (failures.length) {
+if (
+  realLayoutFailures.length ||
+  infrastructureFailures.length
+) {
 
   console.error(
     "=========================================="
   );
 
-  console.error(
-    `LAYOUT AUDIT FAILED: ${failures.length} slide(s)`
-  );
+  if (realLayoutFailures.length) {
+    console.error(
+      "REAL LAYOUT FAILURE: " +
+      `${realLayoutFailures.length} slide(s)`
+    );
+  }
 
-  console.error(
-    "Fix the reported pages before final export."
-  );
+  if (infrastructureFailures.length) {
+    console.error(
+      "AUDIT INFRASTRUCTURE FAILURE: " +
+      `${infrastructureFailures.length} slide(s)`
+    );
+  }
 
   console.error(
     "=========================================="
   );
+
+  if (infrastructureFailures.length) {
+    process.exit(3);
+  }
 
   process.exit(2);
 }
