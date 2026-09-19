@@ -1561,3 +1561,29 @@ Page M:
 >
 装饰效果
 ```
+
+
+---
+## Handwritten decoration system
+
+Use `handwritten-effects.css` for visual annotation.
+
+Rules:
+
+- Maximum 1–2 highlighter effects per slide.
+- Maximum one major rough box per slide.
+- Yellow = main theorem / key result.
+- Green = sufficiency / solved / existence.
+- Red = obstruction / warning / contradiction.
+- Light blue = definition / notation / structure.
+- Use hand-wave or hand-underline for lemma names and proof-step labels.
+- Do not apply decorative effects to every formula.
+- Never allow highlights, annotations, arrows, or sketch elements to overlap mathematical content.
+- For geometric or conceptual diagrams, prefer `.sketch-space`, `.sketch-grid`, or `.sketch-dots`.
+- Reserve enough whitespace for hand-drawn figures rather than shrinking text.
+- SVG diagrams should use:
+  - `.sketch-path`
+  - `.sketch-path-red`
+  - `.sketch-path-green`
+  - `.sketch-shape`
+  - `.sketch-label`
